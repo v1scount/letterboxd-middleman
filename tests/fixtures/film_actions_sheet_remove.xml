@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<hierarchy rotation="0">
+  <android.widget.FrameLayout bounds="[0,0][1080,1920]" package="com.letterboxd.letterboxd">
+    <android.widget.TextView text="Inception" bounds="[48,80][400,140]" />
+    <android.widget.TextView text="2010" bounds="[48,150][200,190]" />
+    <android.view.View clickable="true" content-desc="Watched" selected="true" bounds="[80,220][360,420]">
+      <android.widget.TextView text="Watched" />
+    </android.view.View>
+    <android.view.View clickable="true" content-desc="Like" selected="false" bounds="[400,220][680,420]">
+      <android.widget.TextView text="Like" />
+    </android.view.View>
+    <android.view.View clickable="true" content-desc="Watchlist" selected="true" bounds="[720,220][1000,420]">
+      <android.widget.TextView text="Watchlist" />
+    </android.view.View>
+    <android.widget.TextView text="+ Add to lists" clickable="true" bounds="[80,620][900,700]" />
+  </android.widget.FrameLayout>
+</hierarchy>

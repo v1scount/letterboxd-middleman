@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<hierarchy rotation="0">
+  <android.widget.FrameLayout bounds="[0,0][1080,1920]" package="com.letterboxd.letterboxd">
+    <android.widget.TextView text="Welcome to Letterboxd" />
+    <android.widget.Button clickable="true" text="Sign in" bounds="[200,900][880,1020]" />
+    <android.widget.Button clickable="true" text="Create an account" bounds="[200,1080][880,1200]" />
+  </android.widget.FrameLayout>
+</hierarchy>

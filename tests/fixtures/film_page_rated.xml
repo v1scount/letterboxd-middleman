@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<hierarchy rotation="0">
+  <android.widget.FrameLayout bounds="[0,0][1080,1920]" package="com.letterboxd.letterboxd">
+    <android.widget.TextView text="Inception" bounds="[48,80][800,160]" />
+    <android.widget.TextView text="2010 · DIRECTED BY Christopher Nolan" bounds="[48,170][900,230]" />
+    <android.widget.Button clickable="true" text="TRAILER" bounds="[48,250][280,330]" />
+    <android.widget.TextView text="YOUR MIND IS THE SCENE OF THE CRIME." bounds="[48,400][1000,450]" />
+    <android.widget.TextView text="RATINGS" bounds="[48,700][300,740]" />
+    <android.view.View clickable="true" bounds="[48,1100][1032,1240]">
+      <android.widget.TextView text="You've rated this film ★★★★" bounds="[80,1120][800,1220]" />
+    </android.view.View>
+    <android.widget.FrameLayout clickable="true" content-desc="Search" bounds="[216,1800][432,1920]">
+      <android.widget.TextView text="Search" />
+    </android.widget.FrameLayout>
+  </android.widget.FrameLayout>
+</hierarchy>

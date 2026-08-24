@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<hierarchy rotation="1">
+  <android.widget.FrameLayout bounds="[0,0][1920,1080]" package="com.letterboxd.letterboxd">
+    <android.widget.EditText text="Inception" focused="false" clickable="true" bounds="[40,40][700,140]" />
+    <android.view.View text="Films" clickable="true" bounds="[40,150][200,210]" />
+    <android.view.View
+      content-desc="Inception 2010, directed by Christopher Nolan"
+      clickable="false"
+      bounds="[720,80][1700,220]" />
+    <android.view.View
+      content-desc="Inception 1980, Экпал"
+      clickable="false"
+      bounds="[720,230][1700,370]" />
+    <android.view.View
+      content-desc="Inception: The Cobol Job 2010, directed by Ian Kirby"
+      clickable="false"
+      bounds="[720,380][1700,520]" />
+    <android.widget.FrameLayout clickable="true" content-desc="Search" bounds="[1750,400][1900,540]">
+      <android.widget.TextView text="Search" />
+    </android.widget.FrameLayout>
+  </android.widget.FrameLayout>
+</hierarchy>

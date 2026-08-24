@@ -1,0 +1,15 @@
+# Optional. Appium, adb, and the phone stay on the host.
+# Prefer: uvicorn on the host next to Appium.
+services:
+  middleman:
+    build: .
+    container_name: letterboxd-middleman
+    restart: unless-stopped
+    network_mode: host
+    env_file:
+      - .env
+    environment:
+      HOST: 127.0.0.1
+      PORT: 8787
+      APPIUM_SPAWN: "false"
+      APPIUM_URL: http://127.0.0.1:4723

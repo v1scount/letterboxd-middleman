@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<hierarchy rotation="0">
+  <android.widget.FrameLayout bounds="[0,0][1080,1920]" package="com.letterboxd.letterboxd">
+    <android.widget.EditText text="Inception" focused="true" bounds="[48,120][1032,200]" />
+    <androidx.recyclerview.widget.RecyclerView bounds="[0,200][1080,1700]" scrollable="true">
+      <android.view.ViewGroup clickable="true" bounds="[0,200][1080,480]">
+        <android.widget.TextView text="Inception" bounds="[200,220][900,280]" />
+        <android.widget.TextView text="2010" bounds="[200,290][400,330]" />
+        <android.widget.TextView text="Christopher Nolan" bounds="[200,340][800,380]" />
+      </android.view.ViewGroup>
+      <android.view.ViewGroup clickable="true" bounds="[0,480][1080,760]">
+        <android.widget.TextView text="Inception: The Cobol Job" bounds="[200,500][1000,560]" />
+        <android.widget.TextView text="2010" bounds="[200,570][400,610]" />
+        <android.widget.TextView text="Ian Kirby" bounds="[200,620][800,660]" />
+      </android.view.ViewGroup>
+      <android.view.ViewGroup clickable="true" content-desc="Dune (2021) Directed by Denis Villeneuve" bounds="[0,760][1080,1040]">
+        <android.widget.TextView text="Dune" bounds="[200,780][900,840]" />
+        <android.widget.TextView text="2021" bounds="[200,850][400,890]" />
+      </android.view.ViewGroup>
+    </androidx.recyclerview.widget.RecyclerView>
+    <android.widget.FrameLayout clickable="true" content-desc="Search" bounds="[216,1800][432,1920]">
+      <android.widget.TextView text="Search" />
+    </android.widget.FrameLayout>
+    <android.widget.FrameLayout clickable="true" content-desc="Profile" bounds="[648,1800][864,1920]">
+      <android.widget.TextView text="Profile" />
+    </android.widget.FrameLayout>
+  </android.widget.FrameLayout>
+</hierarchy>
