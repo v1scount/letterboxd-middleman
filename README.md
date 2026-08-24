@@ -4,43 +4,50 @@ Personal HTTP service that adds a film to **your** Letterboxd watchlist. It driv
 
 Letterboxd does not grant API keys for private projects. This taps the app on your account only. A few films a week is the intended load.
 
-## Host setup
+## Selfhost (Docker)
 
-The Playwright/Chromium path is gone. Run this on the machine the phone is plugged into — not inside the old headed-Chromium container.
+One container runs FastAPI, Appium, and adb. Run it on the machine the phone is plugged into.
 
 1. USB debugging on the phone, authorize this computer, no PIN (swipe or none). Install Letterboxd and **sign in by hand**. Leave it charging; stay-awake while plugged in.
-2. Android `adb` on the PATH, or at `~/.local/opt/platform-tools/adb`.
-3. Node.js, then Appium 2 and the Android driver:
-
-```bash
-npm install -g appium
-appium driver install uiautomator2
-```
-
-The first Appium session installs `io.appium.uiautomator2.server` on the phone.
+2. Copy env and set the API key:
 
 ```bash
 cp .env.example .env
 ```
 
-Set `MIDDLEMAN_API_KEY`. Leave `APPIUM_SPAWN=true` so the API starts Appium if nothing is listening on `APPIUM_URL`.
+Set `MIDDLEMAN_API_KEY`.
+
+3. Stop host Appium and host adb so they do not steal the USB device:
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python -m app.cli --setup
+adb kill-server
 ```
 
-`--setup` confirms Appium, the device, and that the Letterboxd UI looks signed in. Optional: `scrcpy` to watch taps; `python -m app.cli --dump-source tmp/source.xml` to capture locators.
+Stop any `appium` process on the host as well.
 
-Then:
+4. Start the stack:
 
 ```bash
-uvicorn app.main:app --host 127.0.0.1 --port 8787
+docker compose up -d --build
 ```
 
-The API listens on `127.0.0.1:8787`.
+5. Confirm the phone and that Letterboxd looks signed in:
+
+```bash
+docker compose exec middleman python -m app.cli --setup
+```
+
+The first Appium session installs `io.appium.uiautomator2.server` on the phone.
+
+The API is on `http://127.0.0.1:8787`. Add this compose project in Arcane and start/stop the `letterboxd-middleman` container from there.
+
+Callers on the same host keep using `http://127.0.0.1:8787`. A sibling container must not use `127.0.0.1`; use `http://host.docker.internal:8787` (or a shared Compose network).
+
+Optional: `scrcpy` on the host needs this container's adb server (port 5037 is not published by default). Watch the phone screen, or exec `--dump-source` inside the container:
+
+```bash
+docker compose exec middleman python -m app.cli --dump-source /app/data/source.xml
+```
 
 ## API
 
@@ -70,21 +77,20 @@ A bare `GET /watchlist` returns 405. `-X POST` and `-d` both have to be on the r
 | `auth_required` | phone missing, Appium down, or Letterboxd looks signed out |
 | `error` | timeout, markup change, unexpected screen |
 
-Drive the phone in-process (no API):
+Drive the phone in-process (no API), from a host venv or inside the container:
 
 ```bash
 python -m app.cli "Inception" --year 2010 --direct
+docker compose exec middleman python -m app.cli "Inception" --year 2010 --direct
 ```
 
 ## Session
 
 Login lives in the Letterboxd app (`noReset`). This service does not type your password. If you see a sign-in screen, sign in on the phone and retry `--setup`.
 
-## Docker
-
-Not the default. Appium needs host `adb` and USB. `docker compose` can run only the FastAPI process with `network_mode: host` against a host Appium server (`APPIUM_SPAWN=false`). Prefer `uvicorn` on the host.
-
 ## Development
+
+Host venv is for tests and local iteration. You still need Appium, adb, and the phone on this machine.
 
 ```bash
 python -m venv .venv
@@ -93,9 +99,20 @@ pip install -r requirements.txt
 pytest
 ```
 
+```bash
+cp .env.example .env
+```
+
+For a host venv, set `HOST=127.0.0.1`. Leave `APPIUM_SPAWN=true` so the API starts Appium if nothing is listening on `APPIUM_URL`.
+
+```bash
+python -m app.cli --setup
+uvicorn app.main:app --host 127.0.0.1 --port 8787
+```
+
 Matching rules and page-source parsers are unit-tested. There are no live Letterboxd tests in CI.
 
 ## Security
 
-- Bind stays on localhost. Do not publish `8787` to the LAN.
+- Compose publishes `127.0.0.1:8787` only. Do not publish `8787` to the LAN.
 - Keep `.env` off shared remotes.
