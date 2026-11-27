@@ -11,12 +11,17 @@ services:
     volumes:
       - ./data:/app/data
       - /dev/bus/usb:/dev/bus/usb
+      # Reuse the host RSA key so the phone stays authorized.
+      - ${HOME}/.android:/root/.android
     environment:
       HOST: "0.0.0.0"
       PORT: "8787"
       APPIUM_SPAWN: "true"
       APPIUM_URL: http://127.0.0.1:4723
       ADB_BIN: ""
+    networks:
+      - default
+      - media-ai
     healthcheck:
       test:
         [
@@ -29,3 +34,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 60s
+
+networks:
+  media-ai:
+    name: media-ai

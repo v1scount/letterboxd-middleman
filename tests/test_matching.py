@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from app.matching import (
+    collapse_duplicate_hits,
     directors_overlap,
     needs_director_probe,
     pick_match,
+    strip_ui_chrome,
     titles_match,
     years_match,
 )
@@ -117,9 +119,46 @@ def test_pick_match_nothing_confident() -> None:
     assert decision.kind == "no_match"
 
 
-def test_pick_match_year_mismatch_is_no_match() -> None:
+def test_pick_match_year_mismatch_unique_title_is_still_a_match() -> None:
     decision = pick_match("Inception", [hit("Inception", 2010)], year=1999)
+    assert decision.kind == "match"
+    assert decision.hit is not None
+    assert decision.hit.year == 2010
+
+
+def test_pick_match_year_mismatch_among_remakes_is_no_match() -> None:
+    hits = [hit("Dune", 1984, slug="dune"), hit("Dune", 2021, slug="dune-2021")]
+    decision = pick_match("Dune", hits, year=1990)
     assert decision.kind == "no_match"
+
+
+def test_titles_match_ignores_poster_overlay_chrome() -> None:
+    assert titles_match(
+        "The Shop Around the Corner",
+        "Poster image poster overlay shadow The Shop Around the Corner",
+    )
+    assert strip_ui_chrome(
+        "Poster image poster overlay shadow The Shop Around the Corner"
+    ) == "The Shop Around the Corner"
+    assert strip_ui_chrome("Shadow of a Doubt") == "Shadow of a Doubt"
+
+
+def test_pick_match_collapses_poster_chrome_duplicate() -> None:
+    hits = [
+        hit(
+            "Poster image poster overlay shadow The Shop Around the Corner",
+            1940,
+            slug="poster-image-poster-overlay-shadow-the-shop-around-the-corner",
+        ),
+        hit("The Shop Around the Corner", 1940, slug="the-shop-around-the-corner"),
+    ]
+    collapsed = collapse_duplicate_hits(hits)
+    assert len(collapsed) == 1
+    assert collapsed[0].slug == "the-shop-around-the-corner"
+    decision = pick_match("The Shop Around the Corner", hits, year=1940)
+    assert decision.kind == "match"
+    assert decision.hit is not None
+    assert decision.hit.slug == "the-shop-around-the-corner"
 
 
 def test_needs_director_probe_only_for_ambiguous_without_directors() -> None:

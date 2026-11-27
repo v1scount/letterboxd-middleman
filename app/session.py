@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+import signal
 import subprocess
 import time
 from pathlib import Path
@@ -171,6 +172,7 @@ class SessionManager:
             self._driver.activate_app(self.settings.letterboxd_package)
         except Exception:
             logger.info("activate_app failed; session still has the launch activity")
+        self.dim_display()
         return self._driver
 
     def _quit_driver(self) -> None:
@@ -183,10 +185,18 @@ class SessionManager:
         self._driver = None
 
     def _require_device(self) -> None:
-        serials = _list_adb_serials(self.settings)
+        rows = _adb_device_rows(self.settings)
+        serials = [serial for serial, state in rows if state == "device"]
         if not serials:
+            unauthorized = [serial for serial, state in rows if state == "unauthorized"]
+            if unauthorized:
+                raise RuntimeError(
+                    "Android device is unauthorized; accept the USB debugging prompt "
+                    "on the phone, or mount the host ~/.android adb keys into the container"
+                )
             raise RuntimeError(
-                "no Android device on adb; plug in the phone and authorize USB debugging"
+                "no Android device on adb; plug in the phone, stop host adb "
+                "(adb kill-server), and authorize USB debugging"
             )
         wanted = self.settings.adb_serial.strip()
         if wanted and wanted not in serials:
@@ -196,11 +206,8 @@ class SessionManager:
         logger.info("adb devices: %s", ", ".join(serials))
 
     def _wake_device(self) -> None:
-        adb = self.settings.resolved_adb_bin
-        serial = self.settings.adb_serial.strip()
-        prefix = [adb] + (["-s", serial] if serial else [])
+        prefix = _adb_prefix(self.settings)
         for args in (
-            prefix + ["shell", "input", "keyevent", "KEYCODE_WAKEUP"],
             prefix + ["shell", "svc", "power", "stayon", "usb"],
             prefix + ["shell", "wm", "dismiss-keyguard"],
         ):
@@ -215,6 +222,31 @@ class SessionManager:
             except (FileNotFoundError, subprocess.TimeoutExpired):
                 logger.info("adb wake step skipped: %s", args[0])
                 return
+
+    def dim_display(self) -> None:
+        """Turn the physical panel off without sleeping the device."""
+        prefix = _adb_prefix(self.settings)
+        try:
+            result = subprocess.run(
+                prefix + ["shell", "cmd", "display", "power-off", "0"],
+                check=False,
+                timeout=8,
+                capture_output=True,
+                text=True,
+            )
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            logger.info("display power-off skipped; signalling scrcpy instead")
+            _restart_scrcpy()
+            return
+        text = f"{result.stdout or ''}{result.stderr or ''}".lower()
+        failed = result.returncode != 0 or any(
+            token in text
+            for token in ("unknown", "usage:", "can't find", "not found", "error")
+        )
+        if not failed:
+            logger.info("display power-off via cmd")
+            return
+        _restart_scrcpy()
 
     def _probe_logged_in(self) -> bool:
         from app.letterboxd import looks_logged_in, looks_signed_out
@@ -266,7 +298,31 @@ def _uia2_options(settings: Settings) -> UiAutomator2Options:
     return options
 
 
-def _list_adb_serials(settings: Settings) -> list[str]:
+def _adb_prefix(settings: Settings) -> list[str]:
+    adb = settings.resolved_adb_bin
+    serial = settings.adb_serial.strip()
+    return [adb] + (["-s", serial] if serial else [])
+
+
+def _restart_scrcpy() -> None:
+    path = Path(os.environ.get("SCRCPY_PID_FILE", "/tmp/scrcpy.pid"))
+    try:
+        pid = int(path.read_text(encoding="utf-8").strip())
+    except (OSError, ValueError):
+        logger.info("scrcpy pid file missing; panel-off fallback skipped")
+        return
+    try:
+        os.kill(pid, signal.SIGTERM)
+    except ProcessLookupError:
+        logger.info("scrcpy pid %s already gone", pid)
+        return
+    except PermissionError:
+        logger.info("could not signal scrcpy pid %s", pid)
+        return
+    logger.info("signalled scrcpy pid %s to re-apply turn-screen-off", pid)
+
+
+def _adb_device_rows(settings: Settings) -> list[tuple[str, str]]:
     adb = settings.resolved_adb_bin
     try:
         result = subprocess.run(
@@ -279,12 +335,16 @@ def _list_adb_serials(settings: Settings) -> list[str]:
     except (FileNotFoundError, subprocess.TimeoutExpired):
         logger.warning("could not run %s devices", adb)
         return []
-    serials: list[str] = []
+    rows: list[tuple[str, str]] = []
     for line in (result.stdout or "").splitlines()[1:]:
         parts = line.split()
-        if len(parts) >= 2 and parts[1] == "device":
-            serials.append(parts[0])
-    return serials
+        if len(parts) >= 2:
+            rows.append((parts[0], parts[1]))
+    return rows
+
+
+def _list_adb_serials(settings: Settings) -> list[str]:
+    return [serial for serial, state in _adb_device_rows(settings) if state == "device"]
 
 
 def _appium_ready(url: str) -> bool:
