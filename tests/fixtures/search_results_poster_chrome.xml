@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<hierarchy rotation="0">
+  <android.widget.FrameLayout bounds="[0,0][1080,1920]" package="com.letterboxd.letterboxd">
+    <android.widget.EditText text="The Shop Around the Corner" focused="true" bounds="[48,120][1032,200]" />
+    <android.view.ViewGroup clickable="true" bounds="[0,200][1080,520]">
+      <android.view.View content-desc="Poster image" clickable="false" bounds="[24,220][220,500]" />
+      <android.view.View content-desc="poster overlay" clickable="false" bounds="[24,220][220,500]" />
+      <android.view.View content-desc="shadow" clickable="false" bounds="[24,400][220,500]" />
+      <android.widget.TextView text="The Shop Around the Corner" bounds="[240,240][1000,300]" />
+      <android.widget.TextView text="1940" bounds="[240,310][400,350]" />
+    </android.view.ViewGroup>
+    <android.view.View
+      content-desc="The Shop Around the Corner 1940, directed by Ernst Lubitsch"
+      clickable="false"
+      bounds="[240,240][1000,400]" />
+    <android.widget.FrameLayout clickable="true" content-desc="Search" bounds="[216,1800][432,1920]">
+      <android.widget.TextView text="Search" />
+    </android.widget.FrameLayout>
+  </android.widget.FrameLayout>
+</hierarchy>

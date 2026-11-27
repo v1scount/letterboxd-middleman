@@ -6,9 +6,9 @@ Letterboxd does not grant API keys for private projects. This taps the app on yo
 
 ## Selfhost (Docker)
 
-One container runs FastAPI, Appium, and adb. Run it on the machine the phone is plugged into.
+One container runs FastAPI, Appium, adb, and a headless scrcpy. Run it on the machine the phone is plugged into.
 
-1. USB debugging on the phone, authorize this computer, no PIN (swipe or none). Install Letterboxd and **sign in by hand**. Leave it charging; stay-awake while plugged in.
+1. USB debugging on the phone, authorize this computer, no PIN (swipe or none). Install Letterboxd and **sign in by hand**. Leave it charging. The container's scrcpy keeps the panel off while the device stays awake on USB.
 2. Copy env and set the API key:
 
 ```bash
@@ -17,13 +17,13 @@ cp .env.example .env
 
 Set `MIDDLEMAN_API_KEY`.
 
-3. Stop host Appium and host adb so they do not steal the USB device:
+3. Stop host Appium and host adb so they do not steal the USB device. Two adb servers cannot own the same phone:
 
 ```bash
 adb kill-server
 ```
 
-Stop any `appium` process on the host as well.
+Stop any `appium` process on the host as well. Compose mounts `$HOME/.android` so the container reuses the RSA key this computer already authorized. If `adb devices` inside the container says `unauthorized`, unlock the phone and accept the USB debugging prompt.
 
 4. Start the stack:
 
@@ -41,9 +41,13 @@ The first Appium session installs `io.appium.uiautomator2.server` on the phone.
 
 The API is on `http://127.0.0.1:8787`. Add this compose project in Arcane and start/stop the `letterboxd-middleman` container from there.
 
-Callers on the same host keep using `http://127.0.0.1:8787`. A sibling container must not use `127.0.0.1`; use `http://host.docker.internal:8787` (or a shared Compose network).
+Callers on the same host keep using `http://127.0.0.1:8787`. A sibling container must
+join the shared `media-ai` Compose network and call `http://letterboxd-middleman:8787`.
+Do not use `127.0.0.1` from another container, and do not use `host.docker.internal`:
+this compose file publishes `8787` on localhost only, so the Docker gateway cannot
+reach it.
 
-Optional: `scrcpy` on the host needs this container's adb server (port 5037 is not published by default). Watch the phone screen, or exec `--dump-source` inside the container:
+The container already runs scrcpy against this adb server (`--turn-screen-off --stay-awake`). **Host scrcpy cannot attach at the same time** (one scrcpy per device). Inspect the UI with `--dump-source` inside the container:
 
 ```bash
 docker compose exec middleman python -m app.cli --dump-source /app/data/source.xml

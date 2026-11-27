@@ -100,6 +100,9 @@ def test_parse_result_line_android_label() -> None:
     )
     assert parse_result_line("Inception 1980, Экпал") == ("Inception", 1980, "Экпал")
     assert parse_result_line("Inception") is None
+    assert parse_result_line(
+        "Poster image poster overlay shadow The Shop Around the Corner 1940"
+    ) == ("The Shop Around the Corner", 1940, "")
 
 
 def test_hits_from_compose_search_results() -> None:
@@ -114,6 +117,18 @@ def test_hits_from_compose_search_results() -> None:
     assert decision.hit is not None
     assert decision.hit.year == 2010
     assert decision.hit.slug == "inception"
+
+
+def test_hits_from_poster_chrome_search_results() -> None:
+    hits = hits_from_page_source(_xml("search_results_poster_chrome.xml"))
+    assert [(hit.title, hit.year) for hit in hits] == [
+        ("The Shop Around the Corner", 1940)
+    ]
+    assert hits[0].slug == "the-shop-around-the-corner"
+    decision = pick_match("The Shop Around the Corner", hits, year=1940)
+    assert decision.kind == "match"
+    assert decision.hit is not None
+    assert decision.hit.slug == "the-shop-around-the-corner"
 
 
 def test_watchlist_state_from_film_page_source() -> None:

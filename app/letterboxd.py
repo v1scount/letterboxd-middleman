@@ -11,7 +11,7 @@ from appium.webdriver.common.appiumby import AppiumBy
 from appium.webdriver.webdriver import WebDriver
 from selenium.common.exceptions import StaleElementReferenceException, WebDriverException
 
-from app.matching import pick_match, titles_match, years_match
+from app.matching import pick_match, strip_ui_chrome, titles_match
 from app.models import FilmHit, Outcome, WatchlistRequest, WatchlistResponse
 
 logger = logging.getLogger(__name__)
@@ -614,14 +614,10 @@ def _wait_for_hits(
     while time.monotonic() < deadline:
         last = hits_from_page_source(_safe_source(driver))
         if last:
-            titled = [
-                hit
-                for hit in last
-                if titles_match(title, hit.title) and years_match(year, hit.year)
-            ]
+            titled = [hit for hit in last if titles_match(title, hit.title)]
             if titled:
                 logger.info(
-                    "search parsed %s row(s); %s matched %r (%s)",
+                    "search parsed %s row(s); %s titled %r (year %s)",
                     len(last),
                     len(titled),
                     title,
@@ -630,9 +626,10 @@ def _wait_for_hits(
                 return last
         time.sleep(0.5)
     logger.info(
-        "search parsed %s row(s) for %r: %s",
+        "search parsed %s row(s) for %r (year %s): %s",
         len(last),
         title,
+        year,
         [(hit.title, hit.year) for hit in last],
     )
     return last
@@ -1002,6 +999,7 @@ def parse_result_line(text: str) -> Optional[tuple[str, int, str]]:
         year = int(last.group(1))
         title = rest[: last.start()].strip(" ,;-")
         after = rest[last.end() :].strip(" ,;-")
+    title = strip_ui_chrome(title)
     if not title or title.lower() in SKIP_TITLES:
         return None
     if after and not director:
@@ -1010,6 +1008,7 @@ def parse_result_line(text: str) -> Optional[tuple[str, int, str]]:
 
 
 def _film_hit(title: str, year: Optional[int], director: str = "") -> Optional[FilmHit]:
+    title = strip_ui_chrome(title)
     if not title or title.lower() in SKIP_TITLES:
         return None
     slug = letterboxd_slug(title)
@@ -1045,7 +1044,7 @@ def _hit_from_texts(texts: list[str]) -> Optional[FilmHit]:
         if not text:
             continue
         lowered = text.lower()
-        if lowered in SKIP_TITLES:
+        if lowered in SKIP_TITLES or lowered in {"poster image", "poster overlay"}:
             continue
         directed = _DIRECTED_BY_RE.search(text)
         if directed:
@@ -1062,9 +1061,10 @@ def _hit_from_texts(texts: list[str]) -> Optional[FilmHit]:
             year = year or int(text)
             continue
         parsed_title, parsed_year = parse_item_name(text)
+        parsed_title = strip_ui_chrome(parsed_title)
         if parsed_year:
             year = year or parsed_year
-        if parsed_title.lower() in SKIP_TITLES:
+        if not parsed_title or parsed_title.lower() in SKIP_TITLES:
             continue
         if title is None:
             title = parsed_title

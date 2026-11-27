@@ -82,8 +82,9 @@ async def watchlist(
     async with lock:
         result = await run_watchlist(session, payload)
     logger.info(
-        "watchlist %r -> %s %s",
+        "watchlist %r (%s) -> %s %s",
         payload.title,
+        payload.year,
         result.outcome.value,
         result.url or "",
     )

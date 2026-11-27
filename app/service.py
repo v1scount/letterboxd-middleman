@@ -33,3 +33,5 @@ async def run_watchlist(
             director=request.director,
             message="unexpected error while talking to Letterboxd",
         )
+    finally:
+        await asyncio.to_thread(session.dim_display)
